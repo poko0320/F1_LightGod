@@ -1,4 +1,6 @@
 from dotenv import load_dotenv
+from flask import Flask, jsonify, request
+
 load_dotenv()
 
 import os
@@ -8,15 +10,30 @@ url = os.environ.get("SUPABASE_URL")
 key = os.environ.get("SUPABASE_KEY")
 supabase: Client = create_client(url, key)
 
-#table Driver and Team 
-def addDriver(name: str, driver_Num: int, team: str):
-    resp = supabase.table("Driver").insert({
-        "name": name,
-        "driver_Num": driver_Num,
-        "team": team
-    }).execute()
-    print("addDriver:", resp.data)
+#Flask
+app = Flask(__name__)
 
+#table Driver and Team 
+@app.route("/addDriver/<name>/<int:driver_Num>/<team>")
+def addDriver(name: str, driver_Num: int, team: str):
+    data = request.get_json(force=True)
+    name = data.get("name")
+    driver_num = data.get("driver_Num")
+    team = data.get("team")
+    if not all([name, driver_num, team]):
+        return jsonify({"ok": False, "error": "name, driver_Num, team are required"}), 400
+    try:
+        resp = supabase.table("Driver").insert({
+            "name": name,
+            "driver_Num": driver_Num,
+            "team": team
+        }).execute()
+        
+        return jsonify(resp.data), 200
+    except Exception as e:
+        return jsonify(), 405
+
+@app.route("/addTeam/<name>")
 def addTeam(name: str):
     # fetch drivers (name + points) for this team
     resp = supabase.table("Driver").select("name, points").eq("team", name).execute()
@@ -74,8 +91,6 @@ def editPlayerPredict(playerName: str, raceCode: str, column: str, value: int):
     print("eddit:", column, value)
 
 
-
-# Run
-addDriver("MAX", 1, "RedBull")
-
-
+#run_surver
+if __name__ == "__main__":
+    app.run(debug=True)
