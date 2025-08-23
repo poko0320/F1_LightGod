@@ -28,3 +28,6 @@ supabase_functions==0.10.1
 typing-inspection==0.4.1
 typing_extensions==4.14.1
 websockets==15.0.1
+Flask==3.0.3
+flask-cors==4.0.1      # allow browser frontend to call your API
+pandas==2.2.2          # only if you’ll use the CSV/DataFrame example
