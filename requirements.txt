@@ -33,3 +33,4 @@ flask-cors==4.0.1
 pandas==2.2.2         
 Flask-RESTful==0.3.10
 flasgger==0.9.7.1
+requests==2.32.5
