@@ -1,5 +1,6 @@
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request
+from flasgger import Swagger #make a api doc
 
 load_dotenv()
 
@@ -12,10 +13,31 @@ supabase: Client = create_client(url, key)
 
 #Flask
 app = Flask(__name__)
+swagger = Swagger(app)
 
 #table Driver and Team 
-@app.route("/addDriver/<name>/<int:driver_Num>/<team>")
-def addDriver(name: str, driver_Num: int, team: str):
+@app.route("/addDriver", methods=["POST"])
+def addDriver():
+    ## api doc
+    """
+    Create a driver using JSON body.   # Swagger 2.0 style
+    ---
+    tags: [Drivers]
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          required: [name, driver_Num, team]
+          properties:
+            name:       {type: string,  example: Yuki}
+            driver_Num: {type: integer, example: 22}
+            team:       {type: string,  example: "RedBull Racing"}
+    responses:
+      201: {description: Created}
+      400: {description: Bad request}
+    """
     data = request.get_json(force=True)
     name = data.get("name")
     driver_num = data.get("driver_Num")
@@ -25,15 +47,15 @@ def addDriver(name: str, driver_Num: int, team: str):
     try:
         resp = supabase.table("Driver").insert({
             "name": name,
-            "driver_Num": driver_Num,
+            "driver_Num": driver_num,
             "team": team
         }).execute()
         
-        return jsonify(resp.data), 200
+        return jsonify(resp.data), 201
     except Exception as e:
         return jsonify(), 405
 
-@app.route("/addTeam/<name>")
+@app.route("/addTeam/<name> ")
 def addTeam(name: str):
     # fetch drivers (name + points) for this team
     resp = supabase.table("Driver").select("name, points").eq("team", name).execute()
