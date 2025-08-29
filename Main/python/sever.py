@@ -248,6 +248,82 @@ def editPlayerPredict():
         return jsonify(), 200
     except Exception as e:
         return jsonify(), 405
+    
+#-------------------login----------------------
+@app.post("/auth/signup")
+def signup():
+    """
+    Sign up with email & password.
+    ---
+    tags: [Auth]
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          required: [email, password, display_name]
+          properties:
+            email:    {type: string, example: user@example.com}
+            password: {type: string, example: StrongPassw0rd!}
+            display_name: {type: string, example: Josh}
+    responses:
+      200: {description: Signed up (need email confirm)}
+      400: {description: Error}
+    """
+    data = request.get_json(silent=True) or {}
+    email = data.get("email")
+    password = data.get("password")
+    display_name = data.get("display_name")
+    if not email or not password:
+        return {"ok": False, "error": "email and password required"}, 400
+    try:
+        resp = supabase.auth.sign_up({"email": email, "password": password, "options": {
+                "data": {          
+                    "display_name": display_name
+                }
+            }})
+        return {}, 200
+    except Exception as e:
+        return {"ok": False, "error": str(e)}, 400
+
+
+@app.post("/auth/login")
+def login():
+    """
+    Log in with email & password.
+    ---
+    tags: [Auth]
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          required: [email, password]
+          properties:
+            email:    {type: string, example: user@example.com}
+            password: {type: string, example: StrongPassw0rd!}
+    responses:
+      200: {description: Logged in}
+      400: {description: Error}
+    """
+    data = request.get_json(silent=True) or {}
+    email = data.get("email")
+    password = data.get("password")
+    if not email or not password:
+        return {"ok": False, "error": "email and password required"}, 400
+    try:
+        session = supabase.auth.sign_in_with_password({"email": email, "password": password})
+    
+        access_token = session.session.access_token
+        refresh_token = session.session.refresh_token
+
+        return {"ok": True, "access_token": access_token, "refresh_token": refresh_token}, 200
+
+    except Exception as e:
+        return {"ok": False, "error": str(e)}, 400
+
 
 #run_surver
 if __name__ == "__main__":
