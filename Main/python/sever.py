@@ -7,6 +7,10 @@ load_dotenv()
 import os
 from supabase import create_client, Client
 
+import fastf1
+from fastf1.core import Laps
+import pandas as pd
+
 url = os.environ.get("SUPABASE_URL")
 key = os.environ.get("SUPABASE_KEY")
 supabase: Client = create_client(url, key)
@@ -324,7 +328,46 @@ def login():
     except Exception as e:
         return {"ok": False, "error": str(e)}, 400
 
+#-----------f1 data get and updat-------------------
+@app.post("/qualifyResult/update")
+def addQualifyResult():
+  """
+    Create a driver using JSON body.   
+    ---
+    tags: [F1Data]
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          required: [race_name, driver_num]
+          properties:
+            race_year: {type: integer, example: 2021}
+            race_name:       {type: str, example: Spanish Grand Prix}
+    responses:
+      201: {description: Created}
+      400: {description: Bad request}
+  """
+  data = request.get_json(silent=True) or {}
+  race_year = data.get("race_year")
+  race_name = data.get("race_name")
 
+  if not race_name or not race_year:
+        return {"ok": False, "error": "race_name, driver_num required"}, 400
+
+  try:
+    session = fastf1.get_session(race_year, race_name, 'Q')
+    session.load()
+
+    DriverNumber = pd.unique(session.results.DriverNumber).tolist()
+    resp = supabase.table("Qualify_result").insert({
+      "race_name": f"{race_year} {race_name}",
+      "driver_num": DriverNumber
+    }).execute()
+    return {}, 200
+  except Exception as e:
+        return {"ok": False, "error": str(e)}, 400
 #run_surver
 if __name__ == "__main__":
     app.run(debug=True)
