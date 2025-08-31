@@ -4,83 +4,8 @@ import Link from "next/link";
 
 const links = [
   {
-    title: "Acme",
-    links: [
-      {
-        label: "Download App",
-        href: "https://apps.apple.com/",
-        title: "Download the app from the App Store",
-      },
-      {
-        label: "Features",
-        href: "/#features",
-        title: "See our features",
-      },
-      {
-        label: "Pricing",
-        href: "/pricing",
-        title: "View pricing",
-      },
-    ],
-  },
-  {
-    title: "Products",
-    links: [
-      {
-        label: "For Android",
-        href: "https://play.google.com/store",
-        title: "Download on Android",
-      },
-      {
-        label: "For iPhone",
-        href: "https://apps.apple.com/",
-        title: "Download on iOS",
-      },
-    ],
-  },
-  {
-    title: "Company",
-    links: [
-      {
-        label: "Terms & Conditions",
-        href: "/terms-and-conditions",
-        title: "Read our Terms & Conditions",
-      },
-      {
-        label: "Privacy Policy",
-        href: "/privacy-policy",
-        title: "Read our Privacy Policy",
-      },
-      {
-        label: "Refund Policy",
-        href: "/refund-policy",
-        title: "Read our Refund Policy",
-      },
-    ],
-  },
-  {
     title: "Follow Us",
     links: [
-      {
-        label: (
-          <div className="flex items-center gap-2">
-            <XIcon className="h-4 w-4" />
-            <span>Twitter</span>
-          </div>
-        ),
-        href: "https://x.com/",
-        title: "Follow us on Twitter",
-      },
-      {
-        label: (
-          <div className="flex items-center gap-2">
-            <LinkedInIcon className="h-4 w-4" />
-            <span>LinkedIn</span>
-          </div>
-        ),
-        href: "https://www.linkedin.com/",
-        title: "Connect with us on LinkedIn",
-      },
       {
         label: (
           <div className="flex items-center gap-2">
