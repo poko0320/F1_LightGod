@@ -252,7 +252,31 @@ def editPlayerPredict():
         return jsonify(), 200
     except Exception as e:
         return jsonify(), 405
-    
+
+@app.post("/player/updatePoint", methods=["PUT"])
+def updatePoint():
+  """
+    update Player Point.  
+    ---
+    tags: [Player]
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          required: [raceCode]
+          properties:
+            raceCode:         {type: string,  example: 2025 Monza}
+    responses:
+      200: {description: Done}
+      400: {description: Bad request}
+      405: {description: Error}
+  """
+  resp = supabase.table("User_points").select("player_name").execute()
+  display_names = [row["player_name"] for row in resp.data]
+  result = supabase.table("Qualify_result").select("driver_num").eq("RaceCode", raceCode).execute
+
 #-------------------login----------------------
 @app.post("/auth/signup")
 def signup():
@@ -284,9 +308,11 @@ def signup():
     try:
         resp = supabase.auth.sign_up({"email": email, "password": password, "options": {
                 "data": {          
-                    "display_name": display_name
+                    "Display name": display_name
                 }
             }})
+        
+        resp2 = supabase.table("User_points").insert({"player_name": display_name}).execute()
         return {}, 200
     except Exception as e:
         return {"ok": False, "error": str(e)}, 400
@@ -328,8 +354,8 @@ def login():
     except Exception as e:
         return {"ok": False, "error": str(e)}, 400
 
-#-----------f1 data get and updat-------------------
-@app.post("/qualifyResult/update")
+#-----------f1 data get and update player points-------------------
+@app.post("/qualify/updateResult")
 def addQualifyResult():
   """
     Create a driver using JSON body.   
@@ -365,9 +391,12 @@ def addQualifyResult():
       "race_name": f"{race_year} {race_name}",
       "driver_num": DriverNumber
     }).execute()
-    return {}, 200
+    return {}, 201
   except Exception as e:
         return {"ok": False, "error": str(e)}, 400
+
+
+def 
 #run_surver
 if __name__ == "__main__":
     app.run(debug=True)
