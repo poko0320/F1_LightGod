@@ -253,7 +253,7 @@ def editPlayerPredict():
     except Exception as e:
         return jsonify(), 405
 
-@app.post("/player/updatePoint", methods=["PUT"])
+@app.route("/player/updatePoint", methods=["PUT"])
 def updatePoint():
   """
     update Player Point.  
@@ -267,15 +267,44 @@ def updatePoint():
           type: object
           required: [raceCode]
           properties:
-            raceCode:         {type: string,  example: 2025 Monza}
+            raceCode:         {type: string,  example: 2025 Spanish Grand Prix}
     responses:
       200: {description: Done}
       400: {description: Bad request}
       405: {description: Error}
   """
-  resp = supabase.table("User_points").select("player_name").execute()
-  display_names = [row["player_name"] for row in resp.data]
-  result = supabase.table("Qualify_result").select("driver_num").eq("RaceCode", raceCode).execute
+  data = request.get_json(force=True)
+  raceCode = data.get("raceCode")
+  if not all([raceCode]):
+        return jsonify({"ok": False, "error": "json error"}), 400
+
+  try:
+    resp = supabase.table("User_points").select("player_name").execute()
+    display_names = [row["player_name"] for row in resp.data]
+    res_result = supabase.table("Qualify_result").select("driver_num").eq("race_name", raceCode).execute()
+    res_result_data = res_result.data[0]["driver_num"][:5]
+
+    points = [25, 18, 15, 12, 10]
+    for name in display_names:
+      res_predict = supabase.table("Player_predict") \
+              .select("P1, P2, P3, P4, P5") \
+              .eq("RaceCode", raceCode) \
+              .eq("player_name", name) \
+              .execute()
+
+      if not res_predict.data:
+        continue  
+          
+      predictData = res_predict.data[0]
+      predicted_top5 = [predictData[f"P{i}"] for i in range(1, 6)]
+      for i in range(5):
+        if(predicted_top5[i] == res_result_data[i]):
+          resp2 = supabase.table("User_points").select("points").eq("player_name", name).execute()
+          value = resp2.data[0]["points"] + points[i]
+          supabase.table("User_points").update({"points": value}).eq("player_name", name).execute()
+    return jsonify(), 200
+  except Exception as e:
+        return jsonify({"error": e}), 405
 
 #-------------------login----------------------
 @app.post("/auth/signup")
@@ -394,8 +423,6 @@ def addQualifyResult():
     return {}, 201
   except Exception as e:
         return {"ok": False, "error": str(e)}, 400
-
-
 
 #run_surver
 if __name__ == "__main__":
