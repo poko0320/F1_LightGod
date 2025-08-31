@@ -7,6 +7,10 @@ load_dotenv()
 import os
 from supabase import create_client, Client
 
+import fastf1
+from fastf1.core import Laps
+import pandas as pd
+
 url = os.environ.get("SUPABASE_URL")
 key = os.environ.get("SUPABASE_KEY")
 supabase: Client = create_client(url, key)
@@ -249,6 +253,150 @@ def editPlayerPredict():
     except Exception as e:
         return jsonify(), 405
 
+@app.post("/player/updatePoint", methods=["PUT"])
+def updatePoint():
+  """
+    update Player Point.  
+    ---
+    tags: [Player]
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          required: [raceCode]
+          properties:
+            raceCode:         {type: string,  example: 2025 Monza}
+    responses:
+      200: {description: Done}
+      400: {description: Bad request}
+      405: {description: Error}
+  """
+  resp = supabase.table("User_points").select("player_name").execute()
+  display_names = [row["player_name"] for row in resp.data]
+  result = supabase.table("Qualify_result").select("driver_num").eq("RaceCode", raceCode).execute
+
+#-------------------login----------------------
+@app.post("/auth/signup")
+def signup():
+    """
+    Sign up with email & password.
+    ---
+    tags: [Auth]
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          required: [email, password, display_name]
+          properties:
+            email:    {type: string, example: user@example.com}
+            password: {type: string, example: StrongPassw0rd!}
+            display_name: {type: string, example: Josh}
+    responses:
+      200: {description: Signed up (need email confirm)}
+      400: {description: Error}
+    """
+    data = request.get_json(silent=True) or {}
+    email = data.get("email")
+    password = data.get("password")
+    display_name = data.get("display_name")
+    if not email or not password:
+        return {"ok": False, "error": "email and password required"}, 400
+    try:
+        resp = supabase.auth.sign_up({"email": email, "password": password, "options": {
+                "data": {          
+                    "Display name": display_name
+                }
+            }})
+        
+        resp2 = supabase.table("User_points").insert({"player_name": display_name}).execute()
+        return {}, 200
+    except Exception as e:
+        return {"ok": False, "error": str(e)}, 400
+
+
+@app.post("/auth/login")
+def login():
+    """
+    Log in with email & password.
+    ---
+    tags: [Auth]
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          required: [email, password]
+          properties:
+            email:    {type: string, example: user@example.com}
+            password: {type: string, example: StrongPassw0rd!}
+    responses:
+      200: {description: Logged in}
+      400: {description: Error}
+    """
+    data = request.get_json(silent=True) or {}
+    email = data.get("email")
+    password = data.get("password")
+    if not email or not password:
+        return {"ok": False, "error": "email and password required"}, 400
+    try:
+        session = supabase.auth.sign_in_with_password({"email": email, "password": password})
+    
+        access_token = session.session.access_token
+        refresh_token = session.session.refresh_token
+
+        return {"ok": True, "access_token": access_token, "refresh_token": refresh_token}, 200
+
+    except Exception as e:
+        return {"ok": False, "error": str(e)}, 400
+
+#-----------f1 data get and update player points-------------------
+@app.post("/qualify/updateResult")
+def addQualifyResult():
+  """
+    Create a driver using JSON body.   
+    ---
+    tags: [F1Data]
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          required: [race_name, driver_num]
+          properties:
+            race_year: {type: integer, example: 2021}
+            race_name:       {type: str, example: Spanish Grand Prix}
+    responses:
+      201: {description: Created}
+      400: {description: Bad request}
+  """
+  data = request.get_json(silent=True) or {}
+  race_year = data.get("race_year")
+  race_name = data.get("race_name")
+
+  if not race_name or not race_year:
+        return {"ok": False, "error": "race_name, driver_num required"}, 400
+
+  try:
+    session = fastf1.get_session(race_year, race_name, 'Q')
+    session.load()
+
+    DriverNumber = pd.unique(session.results.DriverNumber).tolist()
+    resp = supabase.table("Qualify_result").insert({
+      "race_name": f"{race_year} {race_name}",
+      "driver_num": DriverNumber
+    }).execute()
+    return {}, 201
+  except Exception as e:
+        return {"ok": False, "error": str(e)}, 400
+
+
+def 
 #run_surver
 if __name__ == "__main__":
     app.run(debug=True)
