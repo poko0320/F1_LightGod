@@ -396,7 +396,7 @@ def addQualifyResult():
         return {"ok": False, "error": str(e)}, 400
 
 
-def 
+
 #run_surver
 if __name__ == "__main__":
     app.run(debug=True)
