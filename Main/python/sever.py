@@ -19,145 +19,6 @@ supabase: Client = create_client(url, key)
 app = Flask(__name__)
 swagger = Swagger(app)
 
-#table Driver and Team 
-@app.route("/addDriver", methods=["POST"])
-def addDriver():
-    ## api doc
-    """
-    Create a driver using JSON body.   
-    ---
-    tags: [Driver & Team]
-    parameters:
-      - in: body
-        name: body
-        required: true
-        schema:
-          type: object
-          required: [name, driver_Num, team]
-          properties:
-            name:       {type: string,  example: Yuki}
-            driver_Num: {type: integer, example: 22}
-            team:       {type: string,  example: "RedBull Racing"}
-    responses:
-      201: {description: Created}
-      400: {description: Bad request}
-    """
-    data = request.get_json(force=True)
-    name = data.get("name")
-    driver_num = data.get("driver_Num")
-    team = data.get("team")
-    if not all([name, driver_num, team]):
-        return jsonify({"ok": False, "error": "name, driver_Num, team are required"}), 400
-    try:
-        resp = supabase.table("Driver").insert({
-            "name": name,
-            "driver_Num": driver_num,
-            "team": team
-        }).execute()
-        
-        return jsonify(resp.data), 201
-    except Exception as e:
-        return jsonify(), 405
-
-@app.route("/addTeam", methods=["POST"])
-def addTeam():
-    """
-    Create a Team using JSON body.  
-    ---
-    tags: [Driver & Team]
-    parameters:
-      - in: body
-        name: body
-        required: true
-        schema:
-          type: object
-          required: [name]
-          properties:
-            name:       {type: string,  example: RedBull Racing}
-    responses:
-      201: {description: Created}
-      400: {description: Bad request}
-      405: {description: Error}
-    """
-    #get name from json 
-    data = request.get_json(force=True)
-    name = data.get("name")
-    if not all([name]):
-        return jsonify({"ok": False, "error": "team name are required"}), 400
-    try:
-    # fetch drivers (name + points) for this team
-        resp = supabase.table("Driver").select("name, points").eq("team", name).execute()
-        print("select drivers:", resp.data)
-
-        driver_names = [row["name"] for row in resp.data]
-        total_points = sum((row.get("points") or 0) for row in resp.data)
-
-        # insert team row
-        resp2 = supabase.table("Team").insert({
-            "name": name,
-            "drivers": driver_names,   
-            "points": total_points
-        }).execute()
-        print("addTeam:", resp2.data)
-        return jsonify(resp.data), 201
-    except Exception as e:
-        return jsonify(), 405
-
-@app.route("/editPoint", methods=["PATCH"])
-def editPoint():
-    """
-    add the driver points, auto update the team points.  
-    ---
-    tags: [Driver & Team]
-    parameters:
-      - in: body
-        name: body
-        required: true
-        schema:
-          type: object
-          required: [driverName, pointsEdit, add]
-          properties:
-            driverName:         {type: string,  example: Yuki}
-            pointsEdit:         {type: int,  example: 10}
-            add:                {type: boolean, example: true, description: true=add, false=subtract}
-
-    responses:
-      200: {description: Edited}
-      400: {description: Bad request}
-      405: {description: Error}
-    """
-    #get name from json 
-    data = request.get_json(force=True)
-    driverName = data.get("driverName")
-    pointsEdit = data.get("pointsEdit")
-    add = data.get("add")
-    if driverName is None or pointsEdit is None or add is None:
-        return jsonify({"ok": False, "error": "driverName, pointsEdit, add are required"}), 400
-    try:
-        #edit driver table
-        res = supabase.table("Driver").select("name, points, team").eq("name", driverName).limit(1).execute()
-
-        row = res.data[0]
-        if(add):
-            new_points = (row.get("points") or 0) + pointsEdit
-        else:
-            new_points = (row.get("points") or 0) - pointsEdit
-        upd = supabase.table("Driver").update({"points": new_points}).eq("name", row["name"]).execute()
-
-        #edit team table
-        team = row.get("team")
-        res2 = supabase.table("Team").select("points").eq("name", team).limit(1).execute()
-        row = res2.data[0]
-        if(add):
-            new_points = (row.get("points") or 0) + pointsEdit
-        else:
-            new_points = (row.get("points") or 0) - pointsEdit
-        upd2 = supabase.table("Team").update({"points": new_points}).eq("name", team).execute()
-        
-        return jsonify(), 200
-    except Exception as e:
-        return jsonify(), 405
-
 #table PlayerResult
 @app.route("/addPlayerPredict", methods=["POST"])
 def addPlayerPredict():
@@ -306,88 +167,11 @@ def updatePoint():
   except Exception as e:
         return jsonify({"error": e}), 405
 
-#-------------------login----------------------
-@app.post("/auth/signup")
-def signup():
-    """
-    Sign up with email & password.
-    ---
-    tags: [Auth]
-    parameters:
-      - in: body
-        name: body
-        required: true
-        schema:
-          type: object
-          required: [email, password, display_name]
-          properties:
-            email:    {type: string, example: user@example.com}
-            password: {type: string, example: StrongPassw0rd!}
-            display_name: {type: string, example: Josh}
-    responses:
-      200: {description: Signed up (need email confirm)}
-      400: {description: Error}
-    """
-    data = request.get_json(silent=True) or {}
-    email = data.get("email")
-    password = data.get("password")
-    display_name = data.get("display_name")
-    if not email or not password:
-        return {"ok": False, "error": "email and password required"}, 400
-    try:
-        resp = supabase.auth.sign_up({"email": email, "password": password, "options": {
-                "data": {          
-                    "Display name": display_name
-                }
-            }})
-        
-        resp2 = supabase.table("User_points").insert({"player_name": display_name}).execute()
-        return {}, 200
-    except Exception as e:
-        return {"ok": False, "error": str(e)}, 400
-
-
-@app.post("/auth/login")
-def login():
-    """
-    Log in with email & password.
-    ---
-    tags: [Auth]
-    parameters:
-      - in: body
-        name: body
-        required: true
-        schema:
-          type: object
-          required: [email, password]
-          properties:
-            email:    {type: string, example: user@example.com}
-            password: {type: string, example: StrongPassw0rd!}
-    responses:
-      200: {description: Logged in}
-      400: {description: Error}
-    """
-    data = request.get_json(silent=True) or {}
-    email = data.get("email")
-    password = data.get("password")
-    if not email or not password:
-        return {"ok": False, "error": "email and password required"}, 400
-    try:
-        session = supabase.auth.sign_in_with_password({"email": email, "password": password})
-    
-        access_token = session.session.access_token
-        refresh_token = session.session.refresh_token
-
-        return {"ok": True, "access_token": access_token, "refresh_token": refresh_token}, 200
-
-    except Exception as e:
-        return {"ok": False, "error": str(e)}, 400
-
 #-----------f1 data get and update player points-------------------
 @app.post("/qualify/updateResult")
 def addQualifyResult():
   """
-    Create a driver using JSON body.   
+    Create a QualifyResult using JSON body.   
     ---
     tags: [F1Data]
     parameters:
@@ -423,6 +207,25 @@ def addQualifyResult():
     return {}, 201
   except Exception as e:
         return {"ok": False, "error": str(e)}, 400
+
+@app.get("/driver/get")
+def getDriverStand():
+  """
+    
+    ---
+    tags: [F1Data]
+    parameters:
+      - in: 
+    responses:
+      200: {description: Created}
+      500: {description: error}
+  """
+  try:
+    resp = supabase.table("Driver").select("*").order("standing", desc=False).execute()
+    print(resp.data)
+    return {"drivers": resp.data}
+  except Exception as e:
+        return jsonify({"error": e}), 500
 
 #run_surver
 if __name__ == "__main__":

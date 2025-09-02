@@ -2,6 +2,7 @@
 import Image from "next/image";
 import LoginButton from "./loginButton";
 import PredictButton from "./predictButton";
+import StandingButton from "./standingButton";
 import Link from "next/link";
 
 
@@ -23,6 +24,7 @@ export default function Header() {
 
       {/* Right: Buttons together */}
       <div style={styles.buttonGroup}>
+        <StandingButton/>
         <PredictButton />
         <LoginButton />
       </div>

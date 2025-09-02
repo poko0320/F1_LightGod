@@ -4,33 +4,6 @@ __pycache__/
 *.pyc
 .vscode/
 
-# Dependencies
-Frontend/node_modules/
-Frontend/.pnp
-Frontend/.pnp.*
-Frontend/.yarn/*
-!Frontend/.yarn/patches
-!Frontend/.yarn/plugins
-!Frontend/.yarn/releases
-!Frontend/.yarn/versions
-
-# Next.js build
-Frontend/.next/
-Frontend/out/
-Frontend/build/
-
-# Env files
-Frontend/.env*
-!Frontend/.env.example
-
-# TypeScript
-Frontend/*.tsbuildinfo
-Frontend/next-env.d.ts
-
 package-lock.json
-
-FrontendPoko/node_modules
-FrontendPoko/.next
-FrontendPoko/out
 
 .DS_Store
