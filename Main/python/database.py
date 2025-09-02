@@ -125,7 +125,7 @@ def updatePlayerQualifyPoint(raceCode: str):
                 
 
 def get_and_store_driver_standings():
-    r = requests.get(standingUrl, standingHeaders)
+    r = requests.get((standingUrl +"/driverStandings"), headers=standingHeaders)
     if r.status_code != 200:
         print("Fetch error:", r.status_code, r.text)
         return
@@ -140,8 +140,6 @@ def get_and_store_driver_standings():
     for d in drivers:
         rows.append({
             "name": d.get("name"),
-            # keep your existing schema fields:
-            "driver_Num": d.get("driverNumber") or d.get("position"),  # fallback to position if no number
             "points": d.get("points", 0),
             "team": d.get("team"),
             # NEW:
@@ -261,6 +259,6 @@ def update_team_standings():
     except Exception as e:
         print("Unexpected error in update_team_standings:", e)
 # Run
-seed_or_upsert_team_standings()
+get_and_store_driver_standings()
 
 

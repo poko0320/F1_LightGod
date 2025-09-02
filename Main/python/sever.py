@@ -171,7 +171,7 @@ def updatePoint():
 @app.post("/qualify/updateResult")
 def addQualifyResult():
   """
-    Create a driver using JSON body.   
+    Create a QualifyResult using JSON body.   
     ---
     tags: [F1Data]
     parameters:
@@ -207,6 +207,25 @@ def addQualifyResult():
     return {}, 201
   except Exception as e:
         return {"ok": False, "error": str(e)}, 400
+
+@app.get("/driver/get")
+def getDriverStand():
+  """
+    
+    ---
+    tags: [F1Data]
+    parameters:
+      - in: 
+    responses:
+      200: {description: Created}
+      500: {description: error}
+  """
+  try:
+    resp = supabase.table("Driver").select("*").order("standing", desc=False).execute()
+    print(resp.data)
+    return {"drivers": resp.data}
+  except Exception as e:
+        return jsonify({"error": e}), 500
 
 #run_surver
 if __name__ == "__main__":
