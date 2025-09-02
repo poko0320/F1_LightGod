@@ -26,7 +26,6 @@ const link: CSSProperties = {
 export default function Home() {
   return (
     <>
-      <Header />
       <div style={container}>
         <h1 style={title}>🏎️ Welcome to F1 LightGod</h1>
         <p style={text}>
