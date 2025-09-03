@@ -19,9 +19,70 @@ supabase: Client = create_client(url, key)
 #Flask
 app = Flask(__name__)
 
+
 CORS(app, resources={r"/player/*": {"origins": ["http://localhost:3000"]}})
 
 swagger = Swagger(app)
+
+@app.route("/addPlayerToPlayerStanding", methods=["POST"])
+def addPlayerToPlayerStanding():
+    """
+    add Player PlayerStanding.  
+    ---
+    tags: [Player]
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          required: [playerName]
+          properties:
+            playerName:
+              type: string
+              example: Josh
+    responses:
+      201:
+        description: Created
+      400:
+        description: Bad request
+      409:
+        description: Error already have
+      500:
+        description: Server error
+    """
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({"ok": False, "error": "Invalid or missing JSON body"}), 400
+
+    playerName = (data.get("playerName") or "").strip()
+    if not playerName:
+        return jsonify({"ok": False, "error": "playerName is required"}), 400
+
+    try:
+        existing = (
+            supabase.table("User_points")
+            .select("player_name")
+            .eq("player_name", playerName)
+            .execute()
+        )
+        if existing.data and len(existing.data) > 0:
+            return jsonify({"ok": False, "error": "Player already exists"}), 409
+
+        resp = (
+            supabase.table("User_points")
+            .insert({"player_name": playerName})
+            .execute()
+        )
+        return jsonify({"ok": True, "data": resp.data}), 201
+
+    except Exception as e:
+        msg = str(e)
+        if "duplicate" in msg.lower() or "unique" in msg.lower():
+            return jsonify({"ok": False, "error": "Player already exists"}), 409
+        return jsonify({"ok": False, "error": msg}), 500
+  
+  
 
 #table PlayerResult
 @app.route("/addPlayerPredict", methods=["POST"])
@@ -228,7 +289,27 @@ def getDriverStand():
   try:
     resp = supabase.table("Driver").select("*").order("standing", desc=False).execute()
     print(resp.data)
-    return {"drivers": resp.data}
+    return {"drivers": resp.data}, 200
+  except Exception as e:
+        return jsonify({"error": e}), 500
+
+@app.get("/player/getTOP10")
+def getPlayerStand():
+  """
+    
+    ---
+    tags: [Player]
+    parameters:
+      - in: 
+    responses:
+      200: {description: Created}
+      500: {description: error}
+  """
+
+  try:
+    resp = supabase.table("User_points").select("*").order("points", desc=True, nullsfirst=False).limit(10).execute()
+    print(resp.data)
+    return {"player": resp.data}, 200
   except Exception as e:
         return jsonify({"error": e}), 500
 
