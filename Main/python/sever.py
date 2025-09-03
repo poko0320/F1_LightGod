@@ -19,8 +19,9 @@ supabase: Client = create_client(url, key)
 #Flask
 app = Flask(__name__)
 
-CORS(app, resources={r"/addPlayerPredict": {"origins": ["http://localhost:3000"]}})
-CORS(app, resources={r"/addPlayerToPlayerStanding": {"origins": ["http://localhost:3000"]}})
+
+CORS(app, resources={r"/player/*": {"origins": ["http://localhost:3000"]}})
+
 
 swagger = Swagger(app)
 
@@ -313,6 +314,64 @@ def getPlayerStand():
   except Exception as e:
         return jsonify({"error": e}), 500
 
+@app.get("/player/getPoint/<string:player_name>")
+def getPlayerPoint(player_name: str):
+  """
+    
+    ---
+    tags: [Player]
+    parameters:
+      - in: 
+    responses:
+      200: {description: Created}
+      500: {description: error}
+  """
+  try:
+    resp = supabase.table("User_points").select("points").eq("player_name", player_name).execute()
+    print(resp.data)
+    return {"points": resp.data}
+  except Exception as e:
+        return jsonify({"error": e}), 500
+  
+@app.get("/player/getCurrentPredict/<string:player_name>")
+def getCurrentPredict(player_name: str):
+  """
+    
+    ---
+    tags: [Player]
+    parameters:
+      - in: 
+    responses:
+      200: {description: Created}
+      500: {description: error}
+  """
+  try:
+    resp = supabase.table("Player_predict").select("*").eq("player_name", player_name).execute()
+    print(resp.data)
+    return {"predicts": resp.data}
+  except Exception as e:
+        return jsonify({"error": e}), 500
+  
+@app.get("/player/getDashboardData/<string:player_name>")
+def getDashboardData(player_name: str):
+  """
+    
+    ---
+    tags: [Player]
+    parameters:
+      - in: 
+    responses:
+      200: {description: Created}
+      500: {description: error}
+  """
+  try:
+    resp = supabase.table("User_points").select("points").eq("player_name", player_name).execute()
+    resp2 = supabase.table("Player_predict").select("*").eq("player_name", player_name).execute()
+    print(resp.data + resp2.data)
+    return {"points": resp.data, "predicts": resp2.data}
+  except Exception as e:
+        return jsonify({"error": e}), 500
+  
 #run_surver
 if __name__ == "__main__":
     app.run(debug=True)
