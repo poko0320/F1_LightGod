@@ -45,7 +45,7 @@ def addPlayerPredict():
     responses:
       201: {description: Created}
       400: {description: Bad request}
-      405: {description: Error}
+      409: {description: Error}
       500: {might already appear}
     """
     data = request.get_json(force=True)
@@ -58,6 +58,7 @@ def addPlayerPredict():
     p5 = data.get("p5")
     spec = data.get("spec")
     if not all([playerName, raceCode, p1, p2, p3, p4, p5, spec]):
+        print(playerName, raceCode, p1, p2, p3, p4, p5, spec)
         return jsonify({"ok": False, "error": "json error"}), 400
     try:
         check = supabase.table("Player_predict").select("player_name").eq("player_name", playerName).eq("RaceCode", raceCode).execute()
@@ -71,11 +72,11 @@ def addPlayerPredict():
                                                             "P5": p5,
                                                             "special": spec
                                                             }).execute()
-            return jsonify(resp.data), 201
+            return jsonify({"ok": True, "data": resp.data}), 201
         else:
-            return jsonify(),500
+            return jsonify({"ok": False, "error": "Prediction already exists"}),409
     except Exception as e:
-        return jsonify(), 405
+        return jsonify({"ok": False, "error": str(e)}),  500
 
 @app.route("/editPlayerPredict", methods=["PATCH"])
 def editPlayerPredict():

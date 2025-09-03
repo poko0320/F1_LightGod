@@ -18,8 +18,10 @@ import { toast } from "sonner";
 const Signup = () => {
   const handleSignup = async (e) => {
     e.preventDefault();
-    const email = e.target[0]?.value;
-    const password =e.target[1]?.value;
+    const display_name = e.target[0]?.value;
+    const email = e.target[1]?.value;
+    const password =e.target[2]?.value;
+
 
     if(!email || !password) {
       toast.error("Please enter email and password");
@@ -27,7 +29,7 @@ const Signup = () => {
     }
 
     const { data,error } = await client.auth.signUp({
-      email, password,
+      email, password, options: {data: {display_name: display_name}}
     });
 
     if(data){
@@ -52,6 +54,16 @@ const Signup = () => {
       <CardContent>
         <form onSubmit={handleSignup}>
           <div className="flex flex-col gap-6">
+          <div className="grid gap-2">
+              <Label htmlFor="Display Name">Display Name</Label>
+              <Input
+                id="display_name"
+                name="display_name"
+                type="display_name"
+                required
+                placeholder="Josh000"
+              />
+            </div>
             <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
               <Input

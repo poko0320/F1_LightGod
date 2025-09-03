@@ -1,5 +1,4 @@
 import type { CSSProperties } from "react";
-import Header from "./components/Header";
 
 const container: CSSProperties = {
   textAlign: "center",

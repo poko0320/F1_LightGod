@@ -1,8 +1,9 @@
 import React from 'react'
+import PredictBox from '@/components/predict/predictBox'
 
 function predict() {
   return (
-    <div>predict</div>
+    <PredictBox/>
   )
 }
 
