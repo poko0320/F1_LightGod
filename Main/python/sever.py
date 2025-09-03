@@ -1,6 +1,7 @@
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request
 from flasgger import Swagger #make a api doc
+from flask_cors import CORS
 
 load_dotenv()
 
@@ -17,6 +18,9 @@ supabase: Client = create_client(url, key)
 
 #Flask
 app = Flask(__name__)
+
+CORS(app, resources={r"/addPlayerPredict": {"origins": ["http://localhost:3000"]}})
+
 swagger = Swagger(app)
 
 #table PlayerResult
