@@ -16,16 +16,16 @@ const styles: { [k: string]: React.CSSProperties } = {
     },
 };
 
-const predict = () => {
+const playerStanding = () => {
   const router = useRouter();
   return (
     <button 
       style={styles.button} 
-      onClick={() => router.push("/predict")}
+      onClick={() => router.push("/playerStanding")}
     >
-      Predict
+      Player Standing
     </button>
   )
 }
 
-export default predict
+export default playerStanding

@@ -23,7 +23,7 @@ const standing = () => {
       style={styles.button} 
       onClick={() => router.push("/driverStanding")}
     >
-      Driver standing
+      Driver Standing
     </button>
   )
 }

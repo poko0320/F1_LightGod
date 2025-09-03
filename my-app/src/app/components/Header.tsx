@@ -5,6 +5,7 @@ import PredictButton from "./predictButton";
 import StandingButton from "./standingButton";
 import Link from "next/link";
 import DashboardButton from "./dashboardButton";
+import PlayerStandingButton from "./playerstandingButton";
 
 
 export default function Header() {
@@ -25,6 +26,7 @@ export default function Header() {
 
       {/* Right: Buttons together */}
       <div style={styles.buttonGroup}>
+        <PlayerStandingButton/>
         <DashboardButton/>
         <StandingButton/>
         <PredictButton />
