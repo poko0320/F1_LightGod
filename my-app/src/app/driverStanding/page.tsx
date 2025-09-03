@@ -1,6 +1,6 @@
 import React from "react";
 
-const API_BASE = process.env.OWN_API!;
+const API_BASE = process.env.NEXT_PUBLIC_OWN_API!;
 
 const DriverStanding = async () => {
   const res = await fetch(`${API_BASE}/driver/get`, {
