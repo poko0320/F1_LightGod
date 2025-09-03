@@ -15,6 +15,8 @@ import { Button } from "../ui/button";
 import client from "@/api/client";
 import { toast } from "sonner";
 
+const API_BASE = process.env.NEXT_PUBLIC_OWN_API;
+
 const Signup = () => {
   const handleSignup = async (e) => {
     e.preventDefault();
@@ -34,6 +36,30 @@ const Signup = () => {
 
     if(data){
       toast.success("Success to sign up. Please Check your email to confirm the link")
+
+      try {
+        const res = await fetch(`${API_BASE}/addPlayerToPlayerStanding`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            playerName:
+              (display_name) || ""
+          }),
+        });
+      
+        const text = await res.text();
+        let data = null;
+        try { data = text ? JSON.parse(text) : null; } catch (e) {}
+      
+        if (!res.ok) {
+          throw new Error((data && data.error) || `HTTP ${res.status} ${res.statusText}`);
+        }
+      
+        toast.success("done");
+      } catch (err) {
+        const message = (err && err.message) ? err.message : String(err);
+        toast.error(message);
+      }
     }
 
     if(error){
