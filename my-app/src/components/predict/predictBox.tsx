@@ -43,6 +43,8 @@ export default function PredictBox() {
         method: "POST",
         body: JSON.stringify(payload),
       });
+
+      toast.message("done")
     } catch (err: any) {
       const message =
         err instanceof Error ? err.message :
