@@ -4,6 +4,7 @@ import LoginButton from "./loginButton";
 import PredictButton from "./predictButton";
 import StandingButton from "./standingButton";
 import Link from "next/link";
+import DashboardButton from "./dashboardButton";
 
 
 export default function Header() {
@@ -24,6 +25,7 @@ export default function Header() {
 
       {/* Right: Buttons together */}
       <div style={styles.buttonGroup}>
+        <DashboardButton/>
         <StandingButton/>
         <PredictButton />
         <LoginButton />
