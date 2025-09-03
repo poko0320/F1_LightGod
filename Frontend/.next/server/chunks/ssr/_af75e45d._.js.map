@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 6, "column": 0}, "map": {"version":3,"sources":[],"names":[],"mappings":"","debugId":null}},
-    {"offset": {"line": 30, "column": 0}, "map": {"version":3,"sources":["file:///C:/Users/jackh/F1App/F1_LightGod/Frontend/src/app/%28legal%29/terms-and-conditions/page.tsx"],"sourcesContent":["import type { Metadata } from \"next\";\r\n\r\n\r\nexport const metadata: Metadata = {\r\n  title: \"Terms and Conditions - Paddle Web Payments Starter\",\r\n  description: \"Terms and Conditions\",\r\n};\r\n\r\nexport default function Ranking() {\r\n  return <h1 className=\"mt-20 text-center text-4xl font-medium tracking-tight sm:text-5xl\">Ranking</h1>;\r\n}\r\n"],"names":[],"mappings":";;;;;;AAGO,MAAM,WAAqB;IAChC,OAAO;IACP,aAAa;AACf;AAEe,SAAS;IACtB,qBAAO,6WAAC;QAAG,WAAU;kBAAoE;;;;;;AAC3F","debugId":null}}]
-}
