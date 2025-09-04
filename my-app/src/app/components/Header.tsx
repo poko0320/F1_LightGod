@@ -27,9 +27,9 @@ export default function Header() {
       {/* Right: Buttons together */}
       <div style={styles.buttonGroup}>
         <PlayerStandingButton/>
-        <DashboardButton/>
         <StandingButton/>
         <PredictButton />
+        <DashboardButton/>
         <LoginButton />
       </div>
     </header>

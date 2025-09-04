@@ -26,13 +26,13 @@ export default function Dashboard() {
   const [err, setErr] = useState<string | null>(null);
 
   const displayName =
-    (user as any)?.user_metadata?.display_name ??
-    (user as any)?.user_metadata?.full_name ??
+    user?.user_metadata?.display_name ??
+    user?.user_metadata?.full_name ??
     user?.email?.split("@")[0] ??
     "User";
   
   const avatar =
-    (user as any)?.user_metadata?.avatar_url || "/user.png";
+    user?.user_metadata?.avatar_url || "/user.png";
 
   useEffect(() => {
     if (loading || !user) return;
@@ -42,7 +42,7 @@ export default function Dashboard() {
     }
 
     const pname =
-      (user as any)?.user_metadata?.display_name ?? user.email?.split("@")[0] ?? "user";
+      user?.user_metadata?.display_name ?? user.email?.split("@")[0] ?? "user";
 
     (async () => {
       try {
@@ -65,11 +65,12 @@ export default function Dashboard() {
         // Predictions: must be data.predicts
         const list = Array.isArray(data.predicts) ? data.predicts : [];
         setPredictions(list);
-      } catch (e: any) {
-        console.error("dashboard fetch failed:", e);
-        setErr(e.message ?? String(e));
-        setPoints("-");
-        setPredictions([]);
+      } catch (e) {
+        if (e instanceof Error) {
+          setErr(e.message);
+        } else {
+          setErr(String(e));
+        }
       }
     })();
   }, [loading, user]);

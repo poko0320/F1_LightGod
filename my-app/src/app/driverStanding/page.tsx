@@ -2,6 +2,14 @@ import React from "react";
 
 const API_BASE = process.env.NEXT_PUBLIC_OWN_API!;
 
+type Driver = {
+  name: string;
+  driver_Num: number | string;
+  team: string;
+  points: number;
+  standing?: number;
+};
+
 const DriverStanding = async () => {
   const res = await fetch(`${API_BASE}/driver/get`, {
     cache: "no-store", // disable caching
@@ -21,7 +29,7 @@ const DriverStanding = async () => {
       </div>
 
       {/* Data Rows */}
-      {data.drivers.map((d: any, idx: number) => (
+      {data.drivers.map((d: Driver, idx: number) => (
         <div key={d.name} style={styles.row}>
           <div style={{ ...styles.cell, ...styles.withBorder }}>{d.standing ?? idx + 1}</div>
           <div style={{ ...styles.cell, ...styles.withBorder }}>{d.name}</div>

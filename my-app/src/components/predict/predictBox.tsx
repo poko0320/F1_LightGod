@@ -17,7 +17,7 @@ import { toast } from "sonner";
 const API_BASE = process.env.NEXT_PUBLIC_OWN_API!;
 
 export default function PredictBox() {
-  const { user } = useAuth() as { user: any };
+  const { user } = useAuth();
   
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -44,8 +44,10 @@ export default function PredictBox() {
         body: JSON.stringify(payload),
       });
 
+      console.log(res)
+
       toast.message("done")
-    } catch (err: any) {
+    } catch (err) {
       const message =
         err instanceof Error ? err.message :
         typeof err === "string" ? err :

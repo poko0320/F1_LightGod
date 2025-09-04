@@ -16,7 +16,7 @@ const styles: { [k: string]: React.CSSProperties } = {
     },
 };
 
-const predict = () => {
+const Predict = () => {
   const router = useRouter();
   return (
     <button 
@@ -28,4 +28,4 @@ const predict = () => {
   )
 }
 
-export default predict
+export default Predict

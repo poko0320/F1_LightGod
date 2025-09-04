@@ -2,7 +2,7 @@
 import React from 'react'
 import { useRouter } from "next/navigation";
 
-const dashboard = () => {
+const Dashboard = () => {
   const router = useRouter();
   return (
     <button 
@@ -14,7 +14,7 @@ const dashboard = () => {
   )
 }
 
-export default dashboard
+export default Dashboard
 
 import { CSSProperties } from "react";
 
