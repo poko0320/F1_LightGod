@@ -16,7 +16,7 @@ const styles: { [k: string]: React.CSSProperties } = {
     },
 };
 
-const standing = () => {
+const Standing = () => {
   const router = useRouter();
   return (
     <button 
@@ -28,4 +28,4 @@ const standing = () => {
   )
 }
 
-export default standing
+export default Standing

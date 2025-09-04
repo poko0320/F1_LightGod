@@ -16,7 +16,7 @@ const styles: { [k: string]: React.CSSProperties } = {
     },
 };
 
-const playerStanding = () => {
+const PlayerStanding = () => {
   const router = useRouter();
   return (
     <button 
@@ -28,4 +28,4 @@ const playerStanding = () => {
   )
 }
 
-export default playerStanding
+export default PlayerStanding
