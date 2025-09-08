@@ -13,14 +13,13 @@ import DriverSelect from "@/components/predict/driverSelect";
 import { Label } from "../ui/label";
 import { Button } from "../ui/button";
 import { toast } from "sonner";
-import client from "@/api/client";
 
 const API_BASE = process.env.NEXT_PUBLIC_OWN_API!;
 
 export default function PredictBox() {
   const { user } = useAuth();
   const [raceCode, setRaceCode] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
 
   useEffect(() => {
     const ctrl = new AbortController();
@@ -35,11 +34,6 @@ export default function PredictBox() {
         if (!res.ok) throw new Error(`racecode ${res.status}`);
         const json = await res.json(); // { raceCode: "..." }
         setRaceCode(json.raceCode ?? null);
-      } catch (e: any) {
-        if (e.name !== "AbortError") {
-          console.error(e);
-          toast.error("Failed to load race code");
-        }
       } finally {
         setLoading(false);
       }

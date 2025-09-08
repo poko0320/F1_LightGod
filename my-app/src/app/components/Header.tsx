@@ -1,12 +1,7 @@
 'use client';
 import Image from "next/image";
 import LoginButton from "./loginButton";
-import PredictButton from "./predictButton";
-import StandingButton from "./standingButton";
 import Link from "next/link";
-import DashboardButton from "./dashboardButton";
-import PlayerStandingButton from "./playerstandingButton";
-import { link } from "fs";
 
 
 export default function Header() {
