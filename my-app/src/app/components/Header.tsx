@@ -6,6 +6,7 @@ import StandingButton from "./standingButton";
 import Link from "next/link";
 import DashboardButton from "./dashboardButton";
 import PlayerStandingButton from "./playerstandingButton";
+import { link } from "fs";
 
 
 export default function Header() {
@@ -26,10 +27,10 @@ export default function Header() {
 
       {/* Right: Buttons together */}
       <div style={styles.buttonGroup}>
-        <PlayerStandingButton/>
-        <StandingButton/>
-        <PredictButton />
-        <DashboardButton/>
+        <Link href="/playerStanding" style={styles.link}>Player Standing</Link>
+        <Link href="/driverStanding" style={styles.link}>Driver Standing</Link>
+        <Link href="/predict" style={styles.link}>Predict</Link>
+        <Link href="/dashboard" style={styles.link}>Dashboard</Link>
         <LoginButton />
       </div>
     </header>
@@ -55,5 +56,11 @@ const styles: { [k: string]: React.CSSProperties } = {
     display: "flex",
     alignItems: "center",
     gap: "12px", // space between buttons
+  },
+  link: {
+    color: "white",      
+    textDecoration: "none",
+    fontWeight: "bold",
+    cursor: "pointer",
   },
 };
