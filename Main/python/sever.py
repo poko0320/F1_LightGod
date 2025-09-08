@@ -20,11 +20,13 @@ supabase: Client = create_client(url, key)
 app = Flask(__name__)
 
 
-CORS(app, resources={r"/player/*": {"origins": ["http://localhost:3000"]}})
+CORS(app, resources={r"/player/*": {"origins": ["http://192.168.1.122:3000"]}})
+CORS(app, resources={r"/f1data/*": {"origins": ["http://192.168.1.122:3000"]}})
+CORS(app, resources={r"/driver/*": {"origins": ["http://192.168.1.122:3000"]}})
 
 swagger = Swagger(app)
 
-@app.route("/addPlayerToPlayerStanding", methods=["POST"])
+@app.route("/player/addPlayerToPlayerStanding", methods=["POST"])
 def addPlayerToPlayerStanding():
     """
     add Player PlayerStanding.  
@@ -85,7 +87,7 @@ def addPlayerToPlayerStanding():
   
 
 #table PlayerResult
-@app.route("/addPlayerPredict", methods=["POST"])
+@app.route("/player/addPlayerPredict", methods=["POST"])
 def addPlayerPredict():
     """
     add Player Predict.  
@@ -143,7 +145,7 @@ def addPlayerPredict():
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}),  500
 
-@app.route("/editPlayerPredict", methods=["PATCH"])
+@app.route("/player/editPlayerPredict", methods=["PATCH"])
 def editPlayerPredict():
     """
     edit Player Predict.  
@@ -234,7 +236,7 @@ def updatePoint():
         return jsonify({"error": e}), 405
 
 #-----------f1 data get and update player points-------------------
-@app.post("/qualify/updateResult")
+@app.post("/f1data/qualify/updateResult")
 def addQualifyResult():
   """
     Create a QualifyResult using JSON body.   

@@ -31,35 +31,11 @@ const Signup = () => {
     }
 
     const { data,error } = await client.auth.signUp({
-      email, password, options: {data: {display_name: display_name}}
+      email, password, options: {data: {display_name: display_name}, emailRedirectTo: 'http://192.168.1.122:3000/auth/confirm'}
     });
 
     if(data){
       toast.success("Success to sign up. Please Check your email to confirm the link")
-
-      try {
-        const res = await fetch(`${API_BASE}/addPlayerToPlayerStanding`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            playerName:
-              (display_name) || ""
-          }),
-        });
-      
-        const text = await res.text();
-        let data = null;
-        try { data = text ? JSON.parse(text) : null; } catch (e) {}
-      
-        if (!res.ok) {
-          throw new Error((data && data.error) || `HTTP ${res.status} ${res.statusText}`);
-        }
-      
-        toast.success("done");
-      } catch (err) {
-        const message = (err && err.message) ? err.message : String(err);
-        toast.error(message);
-      }
     }
 
     if(error){
