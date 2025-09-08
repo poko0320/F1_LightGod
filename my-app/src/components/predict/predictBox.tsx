@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -13,13 +13,39 @@ import DriverSelect from "@/components/predict/driverSelect";
 import { Label } from "../ui/label";
 import { Button } from "../ui/button";
 import { toast } from "sonner";
+import client from "@/api/client";
 
 const API_BASE = process.env.NEXT_PUBLIC_OWN_API!;
 
 export default function PredictBox() {
   const { user } = useAuth();
-  
+  const [raceCode, setRaceCode] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
+  useEffect(() => {
+    const ctrl = new AbortController();
+    (async () => {
+      try {
+        const res = await fetch(`${API_BASE}/setting/racecode`, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+          cache: "no-store",
+          signal: ctrl.signal,
+        });
+        if (!res.ok) throw new Error(`racecode ${res.status}`);
+        const json = await res.json(); // { raceCode: "..." }
+        setRaceCode(json.raceCode ?? null);
+      } catch (e: any) {
+        if (e.name !== "AbortError") {
+          console.error(e);
+          toast.error("Failed to load race code");
+        }
+      } finally {
+        setLoading(false);
+      }
+    })();
+    return () => ctrl.abort();
+  }, []);
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -34,12 +60,12 @@ export default function PredictBox() {
       p4: Number(fd.get("p4") as string),
       p5: Number(fd.get("p5") as string),
       playerName: displayName, 
-      raceCode: "2025 monza",
+      raceCode: raceCode,
       spec: 1,
     };
 
     try {
-      const res = await fetch(`${API_BASE}/addPlayerPredict`, {
+      const res = await fetch(`${API_BASE}/player/addPlayerPredict`, {
         method: "POST",
         body: JSON.stringify(payload),
       });
@@ -60,7 +86,7 @@ export default function PredictBox() {
     <Card>
       <CardHeader>
         <CardTitle>Predict</CardTitle>
-        <CardDescription>Enter predict for current race</CardDescription>
+        <CardDescription>Enter predict for current race: {raceCode} qualifying</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={onSubmit} className="space-y-6">

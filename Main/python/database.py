@@ -259,6 +259,6 @@ def update_team_standings():
     except Exception as e:
         print("Unexpected error in update_team_standings:", e)
 # Run
-get_and_store_driver_standings()
+update_driver_standings()
 
 

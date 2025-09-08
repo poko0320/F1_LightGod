@@ -20,11 +20,14 @@ supabase: Client = create_client(url, key)
 app = Flask(__name__)
 
 
-CORS(app, resources={r"/player/*": {"origins": ["http://localhost:3000"]}})
+CORS(app, resources={r"/player/*": {"origins": ["http://f1lightgod"]}})
+CORS(app, resources={r"/f1data/*": {"origins": ["http://f1lightgod"]}})
+CORS(app, resources={r"/driver/*": {"origins": ["http://f1lightgod"]}})
+CORS(app, resources={r"/setting/*": {"origins": ["http://f1lightgod"]}})
 
 swagger = Swagger(app)
 
-@app.route("/addPlayerToPlayerStanding", methods=["POST"])
+@app.route("/player/addPlayerToPlayerStanding", methods=["POST"])
 def addPlayerToPlayerStanding():
     """
     add Player PlayerStanding.  
@@ -85,7 +88,7 @@ def addPlayerToPlayerStanding():
   
 
 #table PlayerResult
-@app.route("/addPlayerPredict", methods=["POST"])
+@app.route("/player/addPlayerPredict", methods=["POST"])
 def addPlayerPredict():
     """
     add Player Predict.  
@@ -139,11 +142,18 @@ def addPlayerPredict():
                                                             }).execute()
             return jsonify({"ok": True, "data": resp.data}), 201
         else:
-            return jsonify({"ok": False, "error": "Prediction already exists"}),409
+          check = supabase.table("Player_predict").update({"P1": p1,
+                                                            "P2": p2,
+                                                            "P3": p3,
+                                                            "P4": p4,
+                                                            "P5": p5,
+                                                            "special": spec}).eq("player_name", playerName).eq("RaceCode", raceCode).execute()
+          return jsonify({"ok": True, "data": check.data}), 201
     except Exception as e:
+        print(str(e))
         return jsonify({"ok": False, "error": str(e)}),  500
 
-@app.route("/editPlayerPredict", methods=["PATCH"])
+@app.route("/player/editPlayerPredict", methods=["PATCH"])
 def editPlayerPredict():
     """
     edit Player Predict.  
@@ -234,7 +244,7 @@ def updatePoint():
         return jsonify({"error": e}), 405
 
 #-----------f1 data get and update player points-------------------
-@app.post("/qualify/updateResult")
+@app.post("/f1data/qualify/updateResult")
 def addQualifyResult():
   """
     Create a QualifyResult using JSON body.   
@@ -371,6 +381,29 @@ def getDashboardData(player_name: str):
   except Exception as e:
         return jsonify({"error": e}), 500
   
+@app.get("/setting/racecode")
+def getRaceCode():
+  """
+    ---
+    tags: [Setting]
+    parameters:
+      - in: 
+    responses:
+      200: {description: Created}
+      500: {description: error}
+  """
+  try:
+    res = (
+            supabase
+            .table("setting")             
+            .select("raceCode")           
+            .eq("version", "1.1")         
+            .limit(1)
+            .execute()
+        )
+    return {"raceCode":  res.data[0].get("raceCode")}
+  except Exception as e:
+        return jsonify({"error": e}), 500
 #run_surver
 if __name__ == "__main__":
     app.run(debug=True)
