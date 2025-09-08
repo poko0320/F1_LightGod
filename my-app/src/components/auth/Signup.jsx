@@ -31,7 +31,7 @@ const Signup = () => {
     }
 
     const { data,error } = await client.auth.signUp({
-      email, password, options: {data: {display_name: display_name}, emailRedirectTo: 'f1lightgod/auth/confirm'}
+      email, password, options: {data: {display_name: display_name}, emailRedirectTo: 'http://f1lightgod/auth/confirm'}
     });
 
     if(data){
