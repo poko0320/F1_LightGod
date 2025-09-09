@@ -39,9 +39,9 @@ export default function PredictBox() {
       }
       const json = await res.json(); // { raceCode: "..." }
       if (alive) setRaceCode(json.raceCode ?? null);
-    } catch (err: any) {
+    } catch (err) {
       // Abort is expected during StrictMode/route changes
-      if (err?.name !== "AbortError") {
+      if (err !== "AbortError") {
         console.error("racecode fetch failed:", err);
       }
     } finally {
@@ -53,7 +53,7 @@ export default function PredictBox() {
     alive = false;
     ac.abort();
   };
-}, [API_BASE]);
+}, []);
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
