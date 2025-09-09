@@ -19,11 +19,28 @@ supabase: Client = create_client(url, key)
 #Flask
 app = Flask(__name__)
 
+ALLOWED_ORIGINS = [
+    "https://f1lightgod.com",
+    "https://www.f1lightgod.com",
+    # dev / preview origins (optional but handy)
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    # "https://*.vercel.app",   # flask-cors doesn't support wildcards in list
+]
 
-CORS(app, resources={r"/player/*": {"origins": ["http://f1lightgod"]}})
-CORS(app, resources={r"/f1data/*": {"origins": ["http://f1lightgod"]}})
-CORS(app, resources={r"/driver/*": {"origins": ["http://f1lightgod"]}})
-CORS(app, resources={r"/setting/*": {"origins": ["http://f1lightgod"]}})
+CORS(
+    app,
+    resources={
+        r"/player/*": {"origins": ALLOWED_ORIGINS},
+        r"/f1data/*": {"origins": ALLOWED_ORIGINS},
+        r"/driver/*": {"origins": ALLOWED_ORIGINS},
+        r"/setting/*": {"origins": ALLOWED_ORIGINS},
+    },
+    methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization"],
+    expose_headers=["Content-Length"],
+    supports_credentials=True,
+)
 
 swagger = Swagger(app)
 

@@ -22,24 +22,38 @@ export default function PredictBox() {
   const [, setLoading] = useState(true);
 
   useEffect(() => {
-    const ctrl = new AbortController();
-    (async () => {
-      try {
-        const res = await fetch(`${API_BASE}/setting/racecode`, {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-          cache: "no-store",
-          signal: ctrl.signal,
-        });
-        if (!res.ok) throw new Error(`racecode ${res.status}`);
-        const json = await res.json(); // { raceCode: "..." }
-        setRaceCode(json.raceCode ?? null);
-      } finally {
-        setLoading(false);
+  const ac = new AbortController();
+  let alive = true;
+
+  (async () => {
+    try {
+      const res = await fetch(`${API_BASE}/setting/racecode`, {
+        method: "GET",
+        cache: "no-store",
+        signal: ac.signal,
+      });
+      if (!res.ok) {
+        // don't crash the overlay; just log
+        console.error(`racecode ${res.status} ${res.statusText}`);
+        return;
       }
-    })();
-    return () => ctrl.abort();
-  }, []);
+      const json = await res.json(); // { raceCode: "..." }
+      if (alive) setRaceCode(json.raceCode ?? null);
+    } catch (err: any) {
+      // Abort is expected during StrictMode/route changes
+      if (err?.name !== "AbortError") {
+        console.error("racecode fetch failed:", err);
+      }
+    } finally {
+      if (alive) setLoading(false);
+    }
+  })();
+
+  return () => {
+    alive = false;
+    ac.abort();
+  };
+}, [API_BASE]);
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
