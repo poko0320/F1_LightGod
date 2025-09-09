@@ -25,6 +25,7 @@ ALLOWED_ORIGINS = [
     # dev / preview origins (optional but handy)
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "http://192.168.1.122:3000"
     # "https://*.vercel.app",   # flask-cors doesn't support wildcards in list
 ]
 
