@@ -1,5 +1,3 @@
-"use client";
-
 import useAuth from "@/hooks/useAuth";
 import { useEffect, useState } from "react";
 import { styles } from "../../components/dashboard";

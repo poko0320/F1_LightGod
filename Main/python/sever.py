@@ -20,10 +20,11 @@ supabase: Client = create_client(url, key)
 app = Flask(__name__)
 
 
-CORS(app, resources={r"/player/*": {"origins": ["http://f1lightgod"]}})
-CORS(app, resources={r"/f1data/*": {"origins": ["http://f1lightgod"]}})
-CORS(app, resources={r"/driver/*": {"origins": ["http://f1lightgod"]}})
-CORS(app, resources={r"/setting/*": {"origins": ["http://f1lightgod"]}})
+CORS(app, resources={r"/player/*": {"origins": ["http://192.168.1.122:3000"]},
+                    r"/f1data/*": {"origins": ["http://192.168.1.122:3000"]},
+                    r"/driver/*": {"origins": ["http://192.168.1.122:3000"]},
+                    r"/setting/*": {"origins": ["http://192.168.1.122:3000"]},
+})
 
 swagger = Swagger(app)
 

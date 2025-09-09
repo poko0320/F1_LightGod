@@ -38,7 +38,6 @@ export default function PredictBox() {
         setLoading(false);
       }
     })();
-    return () => ctrl.abort();
   }, []);
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
