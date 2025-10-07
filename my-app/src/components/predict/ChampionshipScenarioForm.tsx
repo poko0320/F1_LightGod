@@ -88,8 +88,8 @@ export default function ChampionshipScenarioForm({
             oscar: Array(sprint).fill(""),
           });
         }
-      } catch (e: any) {
-        if (!cancel) setSettingsError(e?.message || "Failed to load settings");
+      } catch (e) {
+        if (!cancel) setSettingsError("Failed to load settings");
       } finally {
         if (!cancel) setLoadingSettings(false);
       }
@@ -145,8 +145,8 @@ export default function ChampionshipScenarioForm({
       const json: CalcResponse = await res.json();
       if (!res.ok || !json.ok) throw new Error(json.ok ? `HTTP ${res.status}` : json.error);
       setResult(json);
-    } catch (e: any) {
-      setSubmitError(e?.message || "Network error");
+    } catch (e) {
+      setSubmitError("Network error");
     } finally {
       setSubmitting(false);
     }
@@ -180,7 +180,7 @@ export default function ChampionshipScenarioForm({
                         min={0}
                         max={20}
                         placeholder="pos"
-                        value={(values[driver][rIdx] ?? "") as any}
+                        value={(values[driver][rIdx] ?? "")}
                         onChange={(e) => updatePosition(type, driver, rIdx, e.target.value)}
                         className="w-24 rounded-xl border px-3 py-1 focus:outline-none focus:ring"
                       />
