@@ -404,6 +404,234 @@ def getRaceCode():
     return {"raceCode":  res.data[0].get("raceCode")}
   except Exception as e:
         return jsonify({"error": e}), 500
+
+    
+@app.route("/driver/calculateChampionshipScenario", methods=["POST"])
+def calculateChampionshipScenario():
+    """
+      Calculate championship scenario for Max, Norris, and Oscar
+      ---
+      tags: [Driver]
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            required: [remainRace, maxPositions, norrisPositions, oscarPositions]
+            properties:
+              maxPositions:
+                type: array
+                items:
+                  type: integer
+                example: [1, 1, 2, 1, 3, 1]
+              norrisPositions:
+                type: array
+                items:
+                  type: integer
+                example: [2, 3, 1, 2, 2, 2]
+              oscarPositions:
+                type: array
+                items:
+                  type: integer
+                example: [3, 2, 3, 3, 1, 3]
+              maxSprintPositions:
+                type: array
+                items:
+                  type: integer
+                example: [1, 2]
+              norrisSprintPositions:
+                type: array
+                items:
+                  type: integer
+                example: [2, 1]
+              oscarSprintPositions:
+                type: array
+                items:
+                  type: integer
+                example: [3, 3]
+      responses:
+        200: {description: Success}
+        400: {description: Bad request}
+        500: {description: Server error}
+    """
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({"ok": False, "error": "Invalid JSON"}), 400
+
+    max_positions = data.get("maxPositions", []) or []
+    norris_positions = data.get("norrisPositions", []) or []
+    oscar_positions = data.get("oscarPositions", []) or []
+    max_sprint_positions = data.get("maxSprintPositions", []) or []
+    norris_sprint_positions = data.get("norrisSprintPositions", []) or []
+    oscar_sprint_positions = data.get("oscarSprintPositions", []) or []
+
+    # ---- fetch settings (remain counts + current wins) ----
+    settings_resp = supabase.table("setting").select(
+        "remainRace, remainSprint, maxWin, norisWin, oscarWin"
+    ).single().execute()
+
+    if not settings_resp.data:
+        return jsonify({"ok": False, "error": "No settings row found"}), 500
+
+    remain_race = int(settings_resp.data.get("remainRace", 0))
+    remain_sprint = int(settings_resp.data.get("remainSprint", 0))
+    current_max_wins = int(settings_resp.data.get("maxWin", 0))
+    current_norris_wins = int(settings_resp.data.get("norisWin", 0))  # column name as given
+    current_oscar_wins = int(settings_resp.data.get("oscarWin", 0))
+
+    # ---- validate lengths ----
+    if any(len(lst) != remain_race for lst in [max_positions, norris_positions, oscar_positions]):
+        return jsonify(
+            ok=False,
+            error="Position arrays must match remainRace length",
+            remainRace=remain_race
+        ), 400
+
+    if remain_sprint > 0 and any(
+        len(lst) != remain_sprint
+        for lst in [max_sprint_positions, norris_sprint_positions, oscar_sprint_positions]
+    ):
+        return jsonify(ok=False, error="Sprint position arrays must match remainSprint length",
+                       remainSprint=remain_sprint), 400
+
+    # ---- points tables ----
+    position_points = {1: 25, 2: 18, 3: 15, 4: 12, 5: 10, 6: 8, 7: 6, 8: 4, 9: 2, 10: 1}
+    sprint_points   = {1:  8, 2:  7, 3:  6, 4:  5, 5:  4, 6: 3, 7: 2, 8: 1}
+
+    try:
+        # ---- current driver points ----
+        drivers_resp = supabase.table("Driver").select("driver_Num, name, points").execute()
+        drivers_data = {d["driver_Num"]: d for d in (drivers_resp.data or [])}
+
+        max_driver    = next((d for d in drivers_resp.data if "Verstappen" in d.get("name","")), None)
+        norris_driver = next((d for d in drivers_resp.data if "Norris"     in d.get("name","")), None)
+        oscar_driver  = next((d for d in drivers_resp.data if "Piastri"    in d.get("name","")), None)
+
+        if not all([max_driver, norris_driver, oscar_driver]):
+            return jsonify({"ok": False, "error": "Could not find all drivers"}), 400
+
+        # ---- projected points ----
+        max_race_projected    = sum(position_points.get(p, 0) for p in max_positions)
+        norris_race_projected = sum(position_points.get(p, 0) for p in norris_positions)
+        oscar_race_projected  = sum(position_points.get(p, 0) for p in oscar_positions)
+
+        max_sprint_projected    = sum(sprint_points.get(p, 0) for p in max_sprint_positions)
+        norris_sprint_projected = sum(sprint_points.get(p, 0) for p in norris_sprint_positions)
+        oscar_sprint_projected  = sum(sprint_points.get(p, 0) for p in oscar_sprint_positions)
+
+        max_projected    = max_race_projected    + max_sprint_projected
+        norris_projected = norris_race_projected + norris_sprint_projected
+        oscar_projected  = oscar_race_projected  + oscar_sprint_projected
+
+        max_current_pts    = int(max_driver.get("points", 0))
+        norris_current_pts = int(norris_driver.get("points", 0))
+        oscar_current_pts  = int(oscar_driver.get("points", 0))
+
+        max_final    = max_current_pts    + max_projected
+        norris_final = norris_current_pts + norris_projected
+        oscar_final  = oscar_current_pts  + oscar_projected
+
+        # ---- tie-break wins (current + projected) ----
+        max_race_wins    = sum(1 for p in max_positions if p == 1)
+        norris_race_wins = sum(1 for p in norris_positions if p == 1)
+        oscar_race_wins  = sum(1 for p in oscar_positions if p == 1)
+
+        max_sprint_wins    = sum(1 for p in max_sprint_positions if p == 1)
+        norris_sprint_wins = sum(1 for p in norris_sprint_positions if p == 1)
+        oscar_sprint_wins  = sum(1 for p in oscar_sprint_positions if p == 1)
+
+        max_total_wins    = current_max_wins    + max_race_wins    + max_sprint_wins
+        norris_total_wins = current_norris_wins + norris_race_wins + norris_sprint_wins
+        oscar_total_wins  = current_oscar_wins  + oscar_race_wins  + oscar_sprint_wins
+
+        contenders = [
+            {"key": "max",    "name": "Max",    "points": max_final,    "wins": max_total_wins},
+            {"key": "norris", "name": "Norris", "points": norris_final, "wins": norris_total_wins},
+            {"key": "oscar",  "name": "Oscar",  "points": oscar_final,  "wins": oscar_total_wins},
+        ]
+
+        top_points = max(c["points"] for c in contenders)
+        top_contenders = [c for c in contenders if c["points"] == top_points]
+
+        if len(top_contenders) == 1:
+            winner = top_contenders[0]
+            winner_reason = "points"
+        else:
+            top_wins = max(c["wins"] for c in top_contenders)
+            winners_by_wins = [c for c in top_contenders if c["wins"] == top_wins]
+            if len(winners_by_wins) == 1:
+                winner = winners_by_wins[0]
+                winner_reason = "wins"
+            else:
+                # still tied -> stable order fallback
+                order = {"max": 0, "norris": 1, "oscar": 2}
+                winner = sorted(winners_by_wins, key=lambda c: order[c["key"]])[0]
+                winner_reason = "stable-order"
+
+        return jsonify({
+            "ok": True,
+            "winner": winner["name"],
+            "winnerReason": winner_reason,
+            "maxFinalPoints": max_final,
+            "norrisFinalPoints": norris_final,
+            "oscarFinalPoints": oscar_final,
+            "breakdown": {
+                "max": {
+                    "currentPoints": max_current_pts,
+                    "projectedRacePoints": max_race_projected,
+                    "projectedSprintPoints": max_sprint_projected,
+                    "projectedTotalPoints": max_projected,
+                    "finalPoints": max_final,
+                    "currentWins": current_max_wins,
+                    "projectedRaceWins": max_race_wins,
+                    "projectedSprintWins": max_sprint_wins,
+                    "totalWinsForTieBreak": max_total_wins
+                },
+                "norris": {
+                    "currentPoints": norris_current_pts,
+                    "projectedRacePoints": norris_race_projected,
+                    "projectedSprintPoints": norris_sprint_projected,
+                    "projectedTotalPoints": norris_projected,
+                    "finalPoints": norris_final,
+                    "currentWins": current_norris_wins,
+                    "projectedRaceWins": norris_race_wins,
+                    "projectedSprintWins": norris_sprint_wins,
+                    "totalWinsForTieBreak": norris_total_wins
+                },
+                "oscar": {
+                    "currentPoints": oscar_current_pts,
+                    "projectedRacePoints": oscar_race_projected,
+                    "projectedSprintPoints": oscar_sprint_projected,
+                    "projectedTotalPoints": oscar_projected,
+                    "finalPoints": oscar_final,
+                    "currentWins": current_oscar_wins,
+                    "projectedRaceWins": oscar_race_wins,
+                    "projectedSprintWins": oscar_sprint_wins,
+                    "totalWinsForTieBreak": oscar_total_wins
+                }
+            }
+        }), 200
+
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+@app.route("/setting/getRemain", methods=["GET"])
+def getRemain():
+  """
+    
+    ---
+    tags: [Setting]
+    parameters:
+      - in: 
+    responses:
+      200: {description: Created}
+      500: {description: error}
+  """
+  resp = supabase.table("setting").select("remainRace, remainSprint").single().execute()
+  if resp.data:
+    return jsonify(resp.data), 200
+  else:
+      return jsonify({"ok": False, "error": "No setting found"}), 404
 #run_surver
 if __name__ == "__main__":
     app.run(debug=True)
