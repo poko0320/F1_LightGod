@@ -23,7 +23,7 @@ app = Flask(__name__)
 CORS(app, resources={r"/player/*": {"origins": ["http://f1lightgod"]}})
 CORS(app, resources={r"/f1data/*": {"origins": ["http://f1lightgod"]}})
 CORS(app, resources={r"/driver/*": {"origins": ["http://f1lightgod"]}})
-CORS(app, resources={r"/setting/*": {"origins": ["http://f1lightgod"]}})
+CORS(app, resources={r"/setting/*": {"origins": ["http://localhost:3000"]}})
 
 swagger = Swagger(app)
 
@@ -404,6 +404,186 @@ def getRaceCode():
     return {"raceCode":  res.data[0].get("raceCode")}
   except Exception as e:
         return jsonify({"error": e}), 500
+
+@app.route("/driver/calculateChampionshipScenario", methods=["POST"])
+def calculateChampionshipScenario():
+    """
+    Calculate championship scenario for Max, Norris, and Oscar
+    ---
+    tags: [Driver]
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          required: [remainRace, maxPositions, norrisPositions, oscarPositions]
+          properties:
+            maxPositions:
+              type: array
+              items:
+                type: integer
+              example: [1, 1, 2, 1, 3, 1]
+            norrisPositions:
+              type: array
+              items:
+                type: integer
+              example: [2, 3, 1, 2, 2, 2]
+            oscarPositions:
+              type: array
+              items:
+                type: integer
+              example: [3, 2, 3, 3, 1, 3]
+            maxSprintPositions:
+              type: array
+              items:
+                type: integer
+              example: [1, 2]
+            norrisSprintPositions:
+              type: array
+              items:
+                type: integer
+              example: [2, 1]
+            oscarSprintPositions:
+              type: array
+              items:
+                type: integer
+              example: [3, 3]
+    responses:
+      200: {description: Success}
+      400: {description: Bad request}
+      500: {description: Server error}
+    """
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({"ok": False, "error": "Invalid JSON"}), 400
+
+    max_positions = data.get("maxPositions", [])
+    norris_positions = data.get("norrisPositions", [])
+    oscar_positions = data.get("oscarPositions", [])
+    max_sprint_positions = data.get("maxSprintPositions", [])
+    norris_sprint_positions = data.get("norrisSprintPositions", [])
+    oscar_sprint_positions = data.get("oscarSprintPositions", [])
+
+    resp = supabase.table("setting").select("remainRace, remainSprint").single().execute()
+    remain_race = int(resp.data.get("remainRace", 0))
+    remain_sprint = int(resp.data.get("remainSprint", 0))
+
+    print(remain_race)
+    if len(max_positions) != remain_race or len(norris_positions) != remain_race or len(oscar_positions) != remain_race:
+        return jsonify(
+            ok=False,
+            error="Position arrays must match remainRace length",
+            remainRace=remain_race
+        ), 400
+
+    if remain_sprint > 0:
+        if len(max_sprint_positions) != remain_sprint or len(norris_sprint_positions) != remain_sprint or len(oscar_sprint_positions) != remain_sprint:
+            return jsonify(ok= False, error= "Sprint position arrays must match remainSprint length"), 400
+
+    # Race points
+    position_points = {
+        1: 25, 2: 18, 3: 15, 4: 12, 5: 10,
+        6: 8, 7: 6, 8: 4, 9: 2, 10: 1
+    }
+
+    # Sprint points
+    sprint_points = {
+        1: 8, 2: 7, 3: 6, 4: 5, 5: 4,
+        6: 3, 7: 2, 8: 1
+    }
+
+    try:
+        # Get current points from database
+        resp = supabase.table("Driver").select("driver_Num, name, points").execute()
+        drivers_data = {driver["driver_Num"]: driver for driver in resp.data}
+
+        # Find Max (1), Norris (4), Oscar (81)
+        max_driver = next((d for d in drivers_data.values() if "Verstappen" in d.get("name", "")), None)
+        norris_driver = next((d for d in drivers_data.values() if "Norris" in d.get("name", "")), None)
+        oscar_driver = next((d for d in drivers_data.values() if "Piastri" in d.get("name", "")), None)
+
+        if not all([max_driver, norris_driver, oscar_driver]):
+            return jsonify({"ok": False, "error": "Could not find all drivers"}), 400
+
+        # Calculate projected race points
+        max_race_projected = sum(position_points.get(pos, 0) for pos in max_positions)
+        norris_race_projected = sum(position_points.get(pos, 0) for pos in norris_positions)
+        oscar_race_projected = sum(position_points.get(pos, 0) for pos in oscar_positions)
+
+        # Calculate projected sprint points
+        max_sprint_projected = sum(sprint_points.get(pos, 0) for pos in max_sprint_positions)
+        norris_sprint_projected = sum(sprint_points.get(pos, 0) for pos in norris_sprint_positions)
+        oscar_sprint_projected = sum(sprint_points.get(pos, 0) for pos in oscar_sprint_positions)
+
+        # Calculate total projected points
+        max_projected = max_race_projected + max_sprint_projected
+        norris_projected = norris_race_projected + norris_sprint_projected
+        oscar_projected = oscar_race_projected + oscar_sprint_projected
+
+        # Calculate final points
+        max_final = max_driver.get("points", 0) + max_projected
+        norris_final = norris_driver.get("points", 0) + norris_projected
+        oscar_final = oscar_driver.get("points", 0) + oscar_projected
+
+        # Determine winner
+        results = [
+            {"name": "Max", "points": max_final},
+            {"name": "Norris", "points": norris_final},
+            {"name": "Oscar", "points": oscar_final}
+        ]
+        winner = max(results, key=lambda x: x["points"])
+
+        return jsonify({
+            "ok": True,
+            "maxFinalPoints": max_final,
+            "norrisFinalPoints": norris_final,
+            "oscarFinalPoints": oscar_final,
+            "winner": winner["name"],
+            "breakdown": {
+                "max": {
+                    "currentPoints": max_driver.get("points", 0),
+                    "projectedRacePoints": max_race_projected,
+                    "projectedSprintPoints": max_sprint_projected,
+                    "projectedTotalPoints": max_projected,
+                    "finalPoints": max_final
+                },
+                "norris": {
+                    "currentPoints": norris_driver.get("points", 0),
+                    "projectedRacePoints": norris_race_projected,
+                    "projectedSprintPoints": norris_sprint_projected,
+                    "projectedTotalPoints": norris_projected,
+                    "finalPoints": norris_final
+                },
+                "oscar": {
+                    "currentPoints": oscar_driver.get("points", 0),
+                    "projectedRacePoints": oscar_race_projected,
+                    "projectedSprintPoints": oscar_sprint_projected,
+                    "projectedTotalPoints": oscar_projected,
+                    "finalPoints": oscar_final
+                }
+            }
+        }), 200
+
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+@app.route("/setting/getRemain", methods=["GET"])
+def getRemain():
+  """
+    
+    ---
+    tags: [Setting]
+    parameters:
+      - in: 
+    responses:
+      200: {description: Created}
+      500: {description: error}
+  """
+  resp = supabase.table("setting").select("remainRace, remainSprint").single().execute()
+  if resp.data:
+    return jsonify(resp.data), 200
+  else:
+      return jsonify({"ok": False, "error": "No setting found"}), 404
 #run_surver
 if __name__ == "__main__":
     app.run(debug=True)
