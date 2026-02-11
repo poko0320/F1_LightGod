@@ -258,7 +258,32 @@ def update_team_standings():
         print("HTTP error while fetching team standings:", e, getattr(e, "response", None).text if hasattr(e, "response") else "")
     except Exception as e:
         print("Unexpected error in update_team_standings:", e)
+def update_year_schedule():
+    data = fastf1.get_event_schedule(2026, include_testing=True, backend=None, force_ergast=False)
+    data = data[['RoundNumber', 'Country', 'Location', 'Session5Date']].copy()
+
+    # Convert pandas timestamps to ISO strings
+    data['Session5Date'] = data['Session5Date'].apply(
+        lambda x: x.isoformat() if pd.notna(x) else None
+    )
+
+    rows = []
+    for row in data.itertuples(index=False):
+        rows.append({
+            "RoundNumber": int(row.RoundNumber) if pd.notna(row.RoundNumber) else None,
+            "Country": row.Country,
+            "Location": row.Location,
+            "Date": row.Session5Date,
+        })
+
+    res = supabase.table("schedule").insert(rows).execute()
+    print(res)
+
+def test():
+    resp = supabase.table("setting").select("RoundNumber, Country, Location, Date").single().execute()
+    print(resp.data)
+
 # Run
-update_driver_standings()
+test()
 
 
