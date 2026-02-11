@@ -19,11 +19,14 @@ supabase: Client = create_client(url, key)
 #Flask
 app = Flask(__name__)
 
-
-CORS(app, resources={r"/player/*": {"origins": ["http://f1lightgod"]}})
-CORS(app, resources={r"/f1data/*": {"origins": ["http://f1lightgod"]}})
-CORS(app, resources={r"/driver/*": {"origins": ["http://f1lightgod"]}})
-CORS(app, resources={r"/setting/*": {"origins": ["http://f1lightgod"]}})
+CORS(app, resources={r"/player/*": {"origins": ["http://localhost:3000"]}})
+CORS(app, resources={r"/f1data/*": {"origins": ["http://localhost:3000"]}})
+CORS(app, resources={r"/driver/*": {"origins": ["http://localhost:3000"]}})
+CORS(app, resources={r"/setting/*": {"origins": ["http://localhost:3000"]}})
+# CORS(app, resources={r"/player/*": {"origins": ["http://f1lightgod"]}})
+# CORS(app, resources={r"/f1data/*": {"origins": ["http://f1lightgod"]}})
+# CORS(app, resources={r"/driver/*": {"origins": ["http://f1lightgod"]}})
+# CORS(app, resources={r"/setting/*": {"origins": ["http://f1lightgod"]}})
 
 swagger = Swagger(app)
 
@@ -615,6 +618,7 @@ def calculateChampionshipScenario():
 
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500
+
 @app.route("/setting/getRemain", methods=["GET"])
 def getRemain():
   """
@@ -628,6 +632,24 @@ def getRemain():
       500: {description: error}
   """
   resp = supabase.table("setting").select("remainRace, remainSprint").single().execute()
+  if resp.data:
+    return jsonify(resp.data), 200
+  else:
+      return jsonify({"ok": False, "error": "No setting found"}), 404
+
+@app.route("/f1data/getEventSchedule", methods=["GET"])
+def get_event_schedule():
+  """
+    
+    ---
+    tags: [F1Data]
+    parameters:
+      - in: 
+    responses:
+      200: {description: Created}
+      404: {description: error}
+  """
+  resp = supabase.table("schedule").select("RoundNumber, Country, Location, Date").execute()
   if resp.data:
     return jsonify(resp.data), 200
   else:
