@@ -11,6 +11,9 @@ import pandas as pd
 
 import requests
 
+from bs4 import BeautifulSoup
+import requests
+
 url = os.environ.get("SUPABASE_URL")
 key = os.environ.get("SUPABASE_KEY")
 standingUrl = os.environ.get("STANDING_URL")
@@ -283,7 +286,15 @@ def test():
     resp = supabase.table("setting").select("RoundNumber, Country, Location, Date").single().execute()
     print(resp.data)
 
+def getdata():
+    page_to_scrape = requests.get("https://espn.com/f1/story/_/id/4789803/mclaren-lando-norris-tops-day-1-f1-testing-bahrain")
+    soup = BeautifulSoup(page_to_scrape.content, "html.parser")
+    quotos = soup.findAll("span", attrs={"class": "article-body"})
+
+    for quoto in quotos:
+        print(quoto.text)
+
 # Run
-test()
+update_year_schedule()
 
 
